@@ -28,7 +28,16 @@ import androidx.lifecycle.LifecycleObserver
 import com.example.android.dessertpusher.databinding.ActivityMainBinding
 import timber.log.Timber
 
+
+/** onSaveInstanceState Bundle Keys **/
+const val KEY_REVENUE = "revenue_key"
+const val KEY_DESSERT_SOLD = "dessert_sold_key"
+const val KEY_TIMER_SECONDS = "timer_seconds_key"
+
+
 class MainActivity : AppCompatActivity(), LifecycleObserver {
+
+
 
     private var revenue = 0
     private var dessertsSold = 0
@@ -78,7 +87,18 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
             onDessertClicked()
         }
 
-        dessertTimer = DessertTimer()
+        dessertTimer = DessertTimer(this.lifecycle)
+
+        // If there is a savedInstanceState bundle, then you're "restarting" the activity
+        // If there isn't a bundle, then it's a "fresh" start
+        if (savedInstanceState != null) {
+            // Get all the game state information from the bundle, set it
+            revenue = savedInstanceState.getInt(KEY_REVENUE, 0)
+            dessertsSold = savedInstanceState.getInt(KEY_DESSERT_SOLD, 0)
+            dessertTimer.secondsCount = savedInstanceState.getInt(KEY_TIMER_SECONDS, 0)
+            showCurrentDessert()
+
+        }
 
         // Set the TextViews to the right values
         binding.revenue = revenue
@@ -127,6 +147,20 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
         }
     }
 
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putInt(KEY_REVENUE, revenue)
+        outState.putInt(KEY_DESSERT_SOLD, dessertsSold)
+        outState.putInt(KEY_TIMER_SECONDS, dessertTimer.secondsCount)
+        Timber.i("onSaveInstanceState Called")
+    }
+
+    override fun onRestoreInstanceState(savedInstanceState: Bundle?) {
+        super.onRestoreInstanceState(savedInstanceState)
+        Timber.i("onRestoreInstanceState Called")
+    }
+
     /**
      * Menu methods
      */
@@ -159,7 +193,7 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
 
     override fun onStart() {
         super.onStart()
-        dessertTimer.startTimer()
+
         Timber.i("onStart Called")
 
     }
@@ -175,7 +209,6 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
     }
 
     override fun onStop() {
-        dessertTimer.stopTimer()
         super.onStop()
         Timber.i("onStop Called")
     }
